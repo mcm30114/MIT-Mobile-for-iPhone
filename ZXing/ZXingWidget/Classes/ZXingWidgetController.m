@@ -20,6 +20,7 @@
 #import "ResultParser.h"
 #import "ParsedResult.h"
 #import "ResultAction.h"
+#import "TwoDDecoderResult.h"
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
@@ -33,6 +34,7 @@
 
 @property BOOL showCancel;
 @property BOOL oneDMode;
+@property BOOL isStatusBarHidden;
 
 - (void)initCapture;
 - (void)stopCapture;
@@ -47,12 +49,13 @@
 #endif
 @synthesize result, delegate, soundToPlay;
 @synthesize overlayView;
-@synthesize oneDMode, showCancel;
+@synthesize oneDMode, showCancel, isStatusBarHidden;
 @synthesize readers;
 
 
 - (id)initWithDelegate:(id<ZXingDelegate>)scanDelegate showCancel:(BOOL)shouldShowCancel OneDMode:(BOOL)shouldUseoOneDMode {
-  if ((self = [super init])) {
+  self = [super init];
+  if (self) {
     [self setDelegate:scanDelegate];
     self.oneDMode = shouldUseoOneDMode;
     self.showCancel = shouldShowCancel;
@@ -71,12 +74,13 @@
 }
 
 - (void)dealloc {
-  if (beepSound != -1) {
+  if (beepSound != (SystemSoundID)-1) {
     AudioServicesDisposeSystemSoundID(beepSound);
   }
   
   [self stopCapture];
 
+  [result release];
   [soundToPlay release];
   [overlayView release];
   [readers release];
@@ -85,7 +89,10 @@
 
 - (void)cancelled {
   [self stopCapture];
-  [[UIApplication sharedApplication] setStatusBarHidden:NO];
+  if (!self.isStatusBarHidden) {
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
+  }
+
   wasCancelled = YES;
   if (delegate != nil) {
     [delegate zxingControllerDidCancel:self];
@@ -112,7 +119,6 @@
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
   self.wantsFullScreenLayout = YES;
-  //[[UIApplication sharedApplication] setStatusBarHidden:YES];
   if ([self soundToPlay] != nil) {
     OSStatus error = AudioServicesCreateSystemSoundID((CFURLRef)[self soundToPlay], &beepSound);
     if (error != kAudioServicesNoError) {
@@ -123,15 +129,14 @@
 
 - (void)viewDidAppear:(BOOL)animated {
   [super viewDidAppear:animated];
-  [[UIApplication sharedApplication] setStatusBarHidden:YES];
-  //self.wantsFullScreenLayout = YES;
+  self.isStatusBarHidden = [[UIApplication sharedApplication] isStatusBarHidden];
+  if (!isStatusBarHidden)
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
 
   decoding = YES;
 
   [self initCapture];
   [self.view addSubview:overlayView];
-  // [self loadImagePicker];
-  // self.view = imagePicker.view;
   
   [overlayView setPoints:nil];
   wasCancelled = NO;
@@ -139,7 +144,8 @@
 
 - (void)viewDidDisappear:(BOOL)animated {
   [super viewDidDisappear:animated];
-  [[UIApplication sharedApplication] setStatusBarHidden:NO];
+  if (!isStatusBarHidden)
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
   [self.overlayView removeFromSuperview];
   [self stopCapture];
 }
@@ -234,7 +240,7 @@
 
 - (void)presentResultForString:(NSString *)resultString {
   self.result = [ResultParser parsedResultForString:resultString];
-  if (beepSound != -1) {
+  if (beepSound != (SystemSoundID)-1) {
     AudioServicesPlaySystemSound(beepSound);
   }
 #ifdef DEBUG
@@ -242,26 +248,26 @@
 #endif
 }
 
-- (void)presentResultPoints:(NSMutableArray *)resultPoints
+- (void)presentResultPoints:(NSArray *)resultPoints
                    forImage:(UIImage *)image
                 usingSubset:(UIImage *)subset {
   // simply add the points to the image view
-  [overlayView setPoints:resultPoints];
+  NSMutableArray *mutableArray = [[NSMutableArray alloc] initWithArray:resultPoints];
+  [overlayView setPoints:mutableArray];
+  [mutableArray release];
 }
 
 - (void)decoder:(Decoder *)decoder didDecodeImage:(UIImage *)image usingSubset:(UIImage *)subset withResult:(TwoDDecoderResult *)twoDResult {
   [self presentResultForString:[twoDResult text]];
   [self presentResultPoints:[twoDResult points] forImage:image usingSubset:subset];
   // now, in a selector, call the delegate to give this overlay time to show the points
-  [self performSelector:@selector(alertDelegate:) withObject:[[twoDResult text] copy] afterDelay:0.0];
+  [self performSelector:@selector(notifyDelegate:) withObject:[[twoDResult text] copy] afterDelay:0.0];
   decoder.delegate = nil;
 }
 
-- (void)alertDelegate:(id)text {        
-  [[UIApplication sharedApplication] setStatusBarHidden:NO];
-  if (delegate != nil) {
-    [delegate zxingController:self didScanResult:text];
-  }
+- (void)notifyDelegate:(id)text {
+  if (!isStatusBarHidden) [[UIApplication sharedApplication] setStatusBarHidden:NO];
+  [delegate zxingController:self didScanResult:text];
   [text release];
 }
 
@@ -284,6 +290,9 @@
 }
 */
 
+#pragma mark - 
+#pragma mark AVFoundation
+
 - (void)initCapture {
 #if HAS_AVFF
   AVCaptureDeviceInput *captureInput =
@@ -297,8 +306,7 @@
   NSNumber* value = [NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA]; 
   NSDictionary* videoSettings = [NSDictionary dictionaryWithObject:value forKey:key]; 
   [captureOutput setVideoSettings:videoSettings]; 
-  self.captureSession = [[AVCaptureSession alloc] init];
-  [self.captureSession release];
+  self.captureSession = [[[AVCaptureSession alloc] init] autorelease];
   self.captureSession.sessionPreset = AVCaptureSessionPresetMedium; // 480x360 on a 4
 
   [self.captureSession addInput:captureInput];
@@ -411,10 +419,11 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     cropRect.size.height = CGImageGetHeight(capture);
   }
 
-  // Won't work if the overlay becomes uncentered ...
-  // iOS always takes videos in landscape
-  // images are always 4x3; device is not
-  // iOS uses virtual pixels for non-image stuff
+  // N.B.
+  // - Won't work if the overlay becomes uncentered ...
+  // - iOS always takes videos in landscape
+  // - images are always 4x3; device is not
+  // - iOS uses virtual pixels for non-image stuff
 
   {
     float height = CGImageGetHeight(capture);
@@ -435,7 +444,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
   Decoder *d = [[Decoder alloc] init];
   d.readers = readers;
   d.delegate = self;
-  cropRect.origin.x = 0.0;
+  cropRect.origin.x = 0.0;  
   cropRect.origin.y = 0.0;
   decoding = [d decodeImage:scrn cropRect:cropRect] == YES ? NO : YES;
   [d release];
@@ -468,6 +477,45 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
   self.prevLayer = nil;
   self.captureSession = nil;
 #endif
+}
+
+#pragma mark - Torch
+
+- (void)setTorch:(BOOL)status {
+#if HAS_AVFF
+  Class captureDeviceClass = NSClassFromString(@"AVCaptureDevice");
+  if (captureDeviceClass != nil) {
+    
+    AVCaptureDevice *device = [captureDeviceClass defaultDeviceWithMediaType:AVMediaTypeVideo];
+    
+    [device lockForConfiguration:nil];
+    if ( [device hasTorch] ) {
+      if ( status ) {
+        [device setTorchMode:AVCaptureTorchModeOn];
+      } else {
+        [device setTorchMode:AVCaptureTorchModeOff];
+      }
+    }
+    [device unlockForConfiguration];
+    
+  }
+#endif
+}
+
+- (BOOL)torchIsOn {
+#if HAS_AVFF
+  Class captureDeviceClass = NSClassFromString(@"AVCaptureDevice");
+  if (captureDeviceClass != nil) {
+    
+    AVCaptureDevice *device = [captureDeviceClass defaultDeviceWithMediaType:AVMediaTypeVideo];
+    
+    if ( [device hasTorch] ) {
+      return [device torchMode] == AVCaptureTorchModeOn;
+    }
+    [device unlockForConfiguration];
+  }
+#endif
+  return NO;
 }
 
 @end

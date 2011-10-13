@@ -20,6 +20,13 @@
  */
 
 #import "ResultParser.h"
+#import "TextResultParser.h"
+
+@interface ResultParser(Private)
+
++ (NSString *)urlDecode:(NSString *)str;
+
+@end
 
 @implementation ResultParser
 
@@ -44,7 +51,8 @@ static NSMutableSet *sResultParsers = nil;
   return resultParsers;
 }
 
-+ (ParsedResult *)parsedResultForString:(NSString *)s {
++ (ParsedResult *)parsedResultForString:(NSString *)s
+                                 format:(BarcodeFormat)barcodeFormat {
 #ifdef DEBUG
   NSLog(@"parsing result:\n<<<\n%@\n>>>\n", s);
 #endif
@@ -52,7 +60,7 @@ static NSMutableSet *sResultParsers = nil;
 #ifdef DEBUG
     NSLog(@"trying %@", NSStringFromClass(c));
 #endif
-    ParsedResult *result = [c parsedResultForString:s];
+    ParsedResult *result = [c parsedResultForString:s format:barcodeFormat];
     if (result != nil) {
 #ifdef DEBUG
       NSLog(@"parsed as %@ %@", NSStringFromClass([result class]), result);
@@ -60,7 +68,45 @@ static NSMutableSet *sResultParsers = nil;
       return result;
     }
   }
-  return nil;
+
+#ifdef DEBUG
+  NSLog(@"No result parsers matched. Falling back to text.");
+#endif
+  return [TextResultParser parsedResultForString:s format:barcodeFormat];
+}
+
++ (ParsedResult *)parsedResultForString:(NSString *)s {
+  return [ResultParser parsedResultForString:s format:BarcodeFormat_None];
+}
+
++ (NSDictionary*)dictionaryForQueryString:(NSString *)queryString {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    NSArray *keyValuePairs = [queryString componentsSeparatedByString:@"&"];
+    for (NSString *kvp in keyValuePairs) {
+        NSRange equals = [kvp rangeOfString:@"="];
+        if (equals.location != NSNotFound) {
+            NSString *key =
+                [kvp substringWithRange:NSMakeRange(0, equals.location)];
+            NSUInteger i = equals.location + 1;
+            NSString *value =
+                [kvp substringWithRange:NSMakeRange(i, [kvp length] - i)];
+            [result setObject:[self urlDecode:value]
+                       forKey:[self urlDecode:key]];
+        }
+    }
+    return result;
+}
+
+@end
+
+@implementation ResultParser(Private)
+
++ (NSString *)urlDecode:(NSString *)str {
+    // Obj-C's url decoder does everything except + to space conversion.
+    NSString *result = [str stringByReplacingOccurrencesOfString:@"+"
+                                                      withString:@" "];
+    return [result stringByReplacingPercentEscapesUsingEncoding:
+        NSUTF8StringEncoding];
 }
 
 @end

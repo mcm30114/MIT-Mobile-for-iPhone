@@ -21,6 +21,7 @@
 
 #import "SMSTOResultParser.h"
 #import "SMSParsedResult.h"
+#import "CBarcodeFormat.h"
 
 #define PREFIX @"SMSTO:"
 
@@ -30,11 +31,12 @@
   [ResultParser registerResultParserClass:self];
 }
 
-+ (ParsedResult *)parsedResultForString:(NSString *)s {
++ (ParsedResult *)parsedResultForString:(NSString *)s
+                                 format:(BarcodeFormat)format {
   NSRange prefixRange = [s rangeOfString:PREFIX options:NSCaseInsensitiveSearch];
   if (prefixRange.location == 0) {
     int max = [s length];
-    int restStart = prefixRange.length;
+    int restStart = /*prefixRange.location + */ prefixRange.length;
     NSRange searchRange = NSMakeRange(restStart, max - restStart);
     NSRange colonRange = [s rangeOfString:@":" options:0 range:searchRange];
     if (colonRange.location != NSNotFound) {

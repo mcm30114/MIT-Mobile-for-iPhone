@@ -68,13 +68,13 @@ public:
   if ([self.delegate respondsToSelector:@selector(decoder:didDecodeImage:usingSubset:withResult:)]) {
     [self.delegate decoder:self didDecodeImage:self.image usingSubset:self.subsetImage withResult:result];
   }
-	
   [result release];
 }
 
 - (void)failedToDecodeImage:(NSString *)reason {
-  if ([self.delegate respondsToSelector:@selector(decoder:failedToDecodeImage:usingSubset:reason:)]) {
-    [self.delegate decoder:self failedToDecodeImage:self.image usingSubset:self.subsetImage reason:reason];
+  if (!self) return;
+  if ([delegate respondsToSelector:@selector(decoder:failedToDecodeImage:usingSubset:reason:)]) {
+    [delegate decoder:self failedToDecodeImage:self.image usingSubset:self.subsetImage reason:reason];
   }
 }
 
@@ -160,7 +160,7 @@ public:
 - (BOOL)decode {
   NSAutoreleasePool* mainpool = [[NSAutoreleasePool alloc] init];
   TwoDDecoderResult *decoderResult = nil;
-    
+  BOOL returnCode = NO;
   { 
     //NSSet *formatReaders = [FormatReader formatReaders];
     NSSet *formatReaders = self.readers;
@@ -182,6 +182,8 @@ public:
 #endif
       for (FormatReader *reader in formatReaders) {
         NSAutoreleasePool *secondarypool = [[NSAutoreleasePool alloc] init];
+        NSMutableArray *points = nil;
+        NSString *resultString = nil;
         try {
   #ifdef DEBUG
           NSLog(@"decoding gray image");
@@ -196,8 +198,7 @@ public:
           Ref<String> resultText(result->getText());
           const char *cString = resultText->getText().c_str();
           const std::vector<Ref<ResultPoint> > &resultPoints = result->getResultPoints();
-          NSMutableArray *points = 
-            [[NSMutableArray alloc ] initWithCapacity:resultPoints.size()];
+          points = [[NSMutableArray alloc ] initWithCapacity:resultPoints.size()];
           
           for (size_t i = 0; i < resultPoints.size(); i++) {
             const Ref<ResultPoint> &rp = resultPoints[i];
@@ -205,20 +206,24 @@ public:
             [points addObject:[NSValue valueWithCGPoint:p]];
           }
           
-          NSString *resultString = [NSString stringWithCString:cString
-                                                        encoding:NSUTF8StringEncoding];
-
-          decoderResult = [[TwoDDecoderResult resultWithText:resultString points:points] retain];
-          [points release];
+          resultString = [[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding];
+          if (decoderResult) [decoderResult release];
+          decoderResult = [[TwoDDecoderResult alloc] initWithText:resultString points:points];
         } catch (ReaderException &rex) {
+#ifdef DEBUG
           NSLog(@"failed to decode, caught ReaderException '%s'",
               rex.what());
+#endif
         } catch (IllegalArgumentException &iex) {
+#ifdef DEBUG
           NSLog(@"failed to decode, caught IllegalArgumentException '%s'", 
               iex.what());
+#endif
         } catch (...) {
           NSLog(@"Caught unknown exception!");
         }
+        [resultString release];
+        [points release];
         [secondarypool release];
       }
       
@@ -245,8 +250,10 @@ public:
 
     if (decoderResult) {
       [self performSelectorOnMainThread:@selector(didDecodeImage:)
-                   withObject:decoderResult
+                   withObject:[decoderResult copy]
                 waitUntilDone:NO];
+      [decoderResult release];
+      returnCode = YES;
     } else {
       [self performSelectorOnMainThread:@selector(failedToDecodeImage:)
                    withObject:NSLocalizedString(@"Decoder BarcodeDetectionFailure", @"No barcode detected.")
@@ -260,7 +267,7 @@ public:
 #endif
   [mainpool release];
 
-  return decoderResult == nil ? NO : YES;
+  return returnCode;
 }
 
 - (BOOL) decodeImage:(UIImage *)i {
@@ -276,6 +283,7 @@ public:
 }
 
 - (void) dealloc {
+  delegate = nil;
   [image release];
   [subsetImage release];
   free(subsetData);

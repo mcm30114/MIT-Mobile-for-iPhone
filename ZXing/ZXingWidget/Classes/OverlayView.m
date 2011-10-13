@@ -20,6 +20,7 @@ static const CGFloat kPadding = 10;
 
 @interface OverlayView()
 @property (nonatomic,assign) UIButton *cancelButton;
+@property (nonatomic,retain) UILabel *instructionsLabel;
 @end
 
 
@@ -29,10 +30,13 @@ static const CGFloat kPadding = 10;
 @synthesize points = _points;
 @synthesize cancelButton;
 @synthesize cropRect;
+@synthesize instructionsLabel;
+@synthesize displayedMessage;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (id) initWithFrame:(CGRect)theFrame cancelEnabled:(BOOL)isCancelEnabled oneDMode:(BOOL)isOneDModeEnabled {
-  if( self = [super initWithFrame:theFrame] ) {
+  self = [super initWithFrame:theFrame];
+  if( self ) {
 
     CGFloat rectSize = self.frame.size.width - kPadding * 2;
     if (!oneDMode) {
@@ -50,10 +54,14 @@ static const CGFloat kPadding = 10;
       [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
       if (oneDMode) {
         [cancelButton setTransform:CGAffineTransformMakeRotation(M_PI/2)];
+        
         [cancelButton setFrame:CGRectMake(20, 175, 45, 130)];
       }
       else {
-        [cancelButton setFrame:CGRectMake(95, 420, 130, 45)];			
+        CGSize theSize = CGSizeMake(100, 50);
+        CGRect theRect = CGRectMake((theFrame.size.width - theSize.width) / 2, cropRect.origin.y + cropRect.size.height + 20, theSize.width, theSize.height);
+        [cancelButton setFrame:theRect];
+        
       }
       
       [cancelButton addTarget:self action:@selector(cancel:) forControlEvents:UIControlEventTouchUpInside];
@@ -75,6 +83,8 @@ static const CGFloat kPadding = 10;
 - (void) dealloc {
 	[imageView release];
 	[_points release];
+  [instructionsLabel release];
+  [displayedMessage release];
 	[super dealloc];
 }
 
@@ -119,9 +129,14 @@ static const CGFloat kPadding = 10;
     return point;
 }
 
+#define kTextMargin 10
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)drawRect:(CGRect)rect {
 	[super drawRect:rect];
+  if (displayedMessage == nil) {
+    self.displayedMessage = @"Place a barcode inside the viewfinder rectangle to scan it.";
+  }
 	CGContextRef c = UIGraphicsGetCurrentContext();
   
 	if (nil != _points) {
@@ -144,13 +159,11 @@ static const CGFloat kPadding = 10;
 		CGContextShowTextAtPoint(c, 74.0, 285.0, text, 49);
 	}
 	else {
-		char *text = "Place a barcode inside the";
-		char *text2 = "viewfinder rectangle to scan it.";
-		CGContextSelectFont(c, "Helvetica", 18, kCGEncodingMacRoman);
-		CGContextScaleCTM(c, -1.0, 1.0);
-		CGContextRotateCTM(c, M_PI);
-		CGContextShowTextAtPoint(c, 48.0, -45.0, text, 26);
-		CGContextShowTextAtPoint(c, 33.0, -70.0, text2, 32);
+    UIFont *font = [UIFont systemFontOfSize:18];
+    CGSize constraint = CGSizeMake(rect.size.width  - 2 * kTextMargin, cropRect.origin.y);
+    CGSize displaySize = [self.displayedMessage sizeWithFont:font constrainedToSize:constraint];
+    CGRect displayRect = CGRectMake((rect.size.width - displaySize.width) / 2 , cropRect.origin.y - displaySize.height, displaySize.width, displaySize.height);
+    [self.displayedMessage drawInRect:displayRect withFont:font lineBreakMode:UILineBreakModeWordWrap alignment:UITextAlignmentCenter];
 	}
 	CGContextRestoreGState(c);
 	int offset = rect.size.width / 2;

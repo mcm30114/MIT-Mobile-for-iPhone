@@ -231,6 +231,10 @@
 		E53459CB119873F3000CB77F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E53459CA119873F3000CB77F /* UIKit.framework */; };
 		E5345A661198792F000CB77F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5345A651198792F000CB77F /* AudioToolbox.framework */; };
 		E5345AA31198859A000CB77F /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5345AA21198859A000CB77F /* CoreGraphics.framework */; };
+		EBE99FE31446723D00DF4C05 /* ArrayAndStringCategories.h in Headers */ = {isa = PBXBuildFile; fileRef = EBE99FDF1446723D00DF4C05 /* ArrayAndStringCategories.h */; };
+		EBE99FE41446723D00DF4C05 /* ArrayAndStringCategories.m in Sources */ = {isa = PBXBuildFile; fileRef = EBE99FE01446723D00DF4C05 /* ArrayAndStringCategories.m */; };
+		EBE99FE51446723D00DF4C05 /* CBarcodeFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = EBE99FE11446723D00DF4C05 /* CBarcodeFormat.h */; };
+		EBE99FE61446723D00DF4C05 /* CBarcodeFormat.mm in Sources */ = {isa = PBXBuildFile; fileRef = EBE99FE21446723D00DF4C05 /* CBarcodeFormat.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -459,6 +463,10 @@
 		E53459CA119873F3000CB77F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		E5345A651198792F000CB77F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		E5345AA21198859A000CB77F /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		EBE99FDF1446723D00DF4C05 /* ArrayAndStringCategories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ArrayAndStringCategories.h; path = Classes/ArrayAndStringCategories.h; sourceTree = "<group>"; };
+		EBE99FE01446723D00DF4C05 /* ArrayAndStringCategories.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ArrayAndStringCategories.m; path = Classes/ArrayAndStringCategories.m; sourceTree = "<group>"; };
+		EBE99FE11446723D00DF4C05 /* CBarcodeFormat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CBarcodeFormat.h; path = Classes/CBarcodeFormat.h; sourceTree = "<group>"; };
+		EBE99FE21446723D00DF4C05 /* CBarcodeFormat.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = CBarcodeFormat.mm; path = Classes/CBarcodeFormat.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -511,6 +519,10 @@
 		08FB77AEFE84172EC02AAC07 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				EBE99FDF1446723D00DF4C05 /* ArrayAndStringCategories.h */,
+				EBE99FE01446723D00DF4C05 /* ArrayAndStringCategories.m */,
+				EBE99FE11446723D00DF4C05 /* CBarcodeFormat.h */,
+				EBE99FE21446723D00DF4C05 /* CBarcodeFormat.mm */,
 				1F3DB0F511C61080009C581B /* DataMatrixReader.h */,
 				1F3DB0F611C61080009C581B /* DataMatrixReader.mm */,
 				1F3DB0F711C61080009C581B /* MultiFormatOneDReader.h */,
@@ -979,6 +991,8 @@
 				3B81AACE120F08170022E5D4 /* HybridBinarizer.h in Headers */,
 				3B81AAF9120F0A7E0022E5D4 /* GreyscaleRotatedLuminanceSource.h in Headers */,
 				3B72D97012130EF6007CEF32 /* ResultPointCallback.h in Headers */,
+				EBE99FE31446723D00DF4C05 /* ArrayAndStringCategories.h in Headers */,
+				EBE99FE51446723D00DF4C05 /* CBarcodeFormat.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1144,6 +1158,8 @@
 				3B81AACD120F08170022E5D4 /* HybridBinarizer.cpp in Sources */,
 				3B81AAF8120F0A7E0022E5D4 /* GreyscaleRotatedLuminanceSource.cpp in Sources */,
 				3B72D96F12130EF6007CEF32 /* ResultPointCallback.cpp in Sources */,
+				EBE99FE41446723D00DF4C05 /* ArrayAndStringCategories.m in Sources */,
+				EBE99FE61446723D00DF4C05 /* CBarcodeFormat.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

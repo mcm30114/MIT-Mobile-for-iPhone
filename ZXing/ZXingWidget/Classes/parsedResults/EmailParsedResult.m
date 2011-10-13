@@ -44,7 +44,7 @@
 
 
 - (NSString *)stringForDisplay {
-  NSMutableArray *parts = [NSMutableArray arrayWithCapacity:10];
+  NSMutableArray *parts = [[NSMutableArray alloc] initWithCapacity:10];
   [parts addObject:[NSString stringWithFormat:NSLocalizedString(@"EmailParsedResult Display: Recipient", @"To: %@"), self.to]];
   if (self.subject) {
     [parts addObject:[NSString stringWithFormat:NSLocalizedString(@"EmailParsedResult Display: Subject", @"Subject: %@"), self.subject]];
@@ -53,7 +53,9 @@
     [parts addObject:@""];
     [parts addObject:[NSString stringWithFormat:NSLocalizedString(@"EmailParsedResult Display: Body", @"%@"), self.body]];
   }
-  return [parts componentsJoinedByString:@"\n"];
+  NSString* string = [NSString stringWithString:[parts componentsJoinedByString:@"\n"]];
+  [parts release];
+  return string;
 }
 
 + (NSString *)typeName {

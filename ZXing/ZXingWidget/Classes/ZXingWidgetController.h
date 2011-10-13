@@ -48,6 +48,7 @@
   AVCaptureVideoPreviewLayer *prevLayer;
 #endif
   BOOL decoding;
+  BOOL isStatusBarHidden;
 }
 
 #if HAS_AVFF
@@ -63,6 +64,9 @@
 - (id)initWithDelegate:(id<ZXingDelegate>)delegate showCancel:(BOOL)shouldShowCancel OneDMode:(BOOL)shouldUseoOneDMode;
 
 - (BOOL)fixedFocus;
+- (void)setTorch:(BOOL)status;
+- (BOOL)torchIsOn;
+
 @end
 
 @protocol ZXingDelegate

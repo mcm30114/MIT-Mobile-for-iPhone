@@ -21,11 +21,15 @@
 
 #import <UIKit/UIKit.h>
 #import "../parsedResults/ParsedResult.h"
+#import "CBarcodeFormat.h"
 
 @interface ResultParser : NSObject {
 
 }
 + (void)registerResultParserClass:(Class)resultParser;
 + (ParsedResult *)parsedResultForString:(NSString *)s;
++ (ParsedResult *)parsedResultForString:(NSString *)s
+                                 format:(BarcodeFormat)barcodeFormat;
++ (NSDictionary*)dictionaryForQueryString:(NSString *)uri;
 
 @end

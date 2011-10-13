@@ -31,13 +31,17 @@
 @synthesize email;
 @synthesize urlString;
 @synthesize address;
+@synthesize organization;
+@synthesize jobTitle;
 
 + (id)actionWithName:(NSString *)n
         phoneNumbers:(NSArray *)nums
                email:(NSString *)em
                  url:(NSString *)us
              address:(NSString *)ad
-                note:(NSString *)nt {
+                note:(NSString *)nt
+        organization:(NSString *)org
+            jobTitle:(NSString *)title {
   AddContactAction *aca = [[[self alloc] init] autorelease];
   aca.name = n;
   aca.phoneNumbers = nums;
@@ -45,6 +49,8 @@
   aca.urlString = us;
   aca.address = ad;
   aca.note = nt;
+  aca.organization = org;
+  aca.jobTitle = title;
   return aca;
 }
 
@@ -67,7 +73,7 @@
                             stringByTrimmingCharactersInSet:whitespaceSet] 
                            componentsSeparatedByCharactersInSet:whitespaceSet];
     ABRecordSetValue(person, kABPersonFirstNameProperty, [firstNames objectAtIndex:0], error);
-    for (int i = 1; i < [firstNames count]; i++) {
+    for (unsigned i = 1; i < [firstNames count]; i++) {
       ABRecordSetValue(person, kABPersonMiddleNameProperty, [firstNames objectAtIndex:1], error);
     }
   } else {
@@ -87,6 +93,14 @@
   
   if (self.note) {
     ABRecordSetValue(person, kABPersonNoteProperty, self.note, error);
+  }
+  
+  if (self.organization) {
+    ABRecordSetValue(person, kABPersonOrganizationProperty, (CFStringRef)self.organization, error);
+  }
+  
+  if (self.jobTitle) {
+    ABRecordSetValue(person, kABPersonJobTitleProperty, (CFStringRef)self.jobTitle, error);
   }
   
   if (self.phoneNumbers && self.phoneNumbers.count > 0) {
@@ -220,5 +234,16 @@
   if (person) {
     [self performSelector:@selector(dismissUnknownPersonViewController:) withObject:unknownPersonViewController afterDelay:0.0];
   }
+}
+
+- (void)dealloc {
+  [name release];
+  [phoneNumbers release];
+  [note release];
+  [email release];
+  [urlString release];
+  [address release];
+  [organization release];
+  [super dealloc];
 }
 @end

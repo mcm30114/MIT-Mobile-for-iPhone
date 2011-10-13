@@ -39,6 +39,17 @@
   return self;
 }
 
+- (id)copyWithZone:(NSZone *)zone {
+    NSArray* newPoints = [[[NSArray alloc] initWithArray:points] autorelease];
+    NSString* newText = [[[NSString alloc] initWithString:text] autorelease];
+    
+    return [[TwoDDecoderResult allocWithZone:zone] initWithText:newText points:newPoints];
+}
+
+- (id)copy {
+  return [self copyWithZone:nil];
+}
+
 - (void)dealloc {
   [text release];
   [points release];

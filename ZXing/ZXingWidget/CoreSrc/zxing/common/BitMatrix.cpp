@@ -27,8 +27,7 @@
 namespace zxing {
 using namespace std;
 
-unsigned int logDigits(unsigned);
-unsigned int logDigits(unsigned digits) {
+static unsigned int logDigits(unsigned digits) {
   unsigned log = 0;
   unsigned val = 1;
   while (val < digits) {
@@ -92,7 +91,7 @@ void BitMatrix::clear() {
 }
 
 void BitMatrix::setRegion(size_t left, size_t top, size_t width, size_t height) {
-  if (top < 0 || left < 0) {
+  if ((long)top < 0 || (long)left < 0) {
     throw IllegalArgumentException("topI and leftJ must be nonnegative");
   }
   if (height < 1 || width < 1) {
